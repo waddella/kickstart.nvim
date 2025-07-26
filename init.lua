@@ -103,7 +103,7 @@ vim.api.nvim_set_keymap('n', '<leader>p', ':term python %<CR>', { noremap = true
 
 -- Make line numbers default
 vim.opt.number = true
--- You can also add relative line numbers, to help with jumping.
+vim.opt.relativenumber = true
 --  Experiment for yourself to see if you like it!
 -- vim.opt.relativenumber = true
 
@@ -173,6 +173,7 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open diagnostic [E]rror float' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -659,6 +660,12 @@ require('lazy').setup({
         },
       }
 
+      -- Add border to LSP hover (documentation) popups
+      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+        vim.lsp.handlers.hover,
+        { border = { "╔", "═", "╗", "║", "╝", "═", "╚", "║" } }
+      )
+
       -- LSP servers and clients are able to communicate to each other what features they support.
       --  By default, Neovim doesn't support everything that is in the LSP specification.
       --  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
@@ -782,7 +789,7 @@ require('lazy').setup({
           return nil
         else
           return {
-            timeout_ms = 500,
+            timeout_ms = 2000,
             lsp_format = 'fallback',
           }
         end
@@ -869,9 +876,13 @@ require('lazy').setup({
       },
 
       completion = {
+        menu = {
+          auto_show = false,
+        },
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        -- documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        documentation = { auto_show = false},
       },
 
       sources = {
@@ -893,7 +904,9 @@ require('lazy').setup({
       fuzzy = { implementation = 'lua' },
 
       -- Shows a signature help window while you type arguments for a function
-      signature = { enabled = true },
+      signature = { enabled = false },
+
+      
     },
   },
 
@@ -975,7 +988,7 @@ require('lazy').setup({
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
-      indent = { enable = true, disable = { 'ruby' } },
+      indent = { enable = true, disable = { 'ruby', 'r' } },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
@@ -1005,7 +1018,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1033,5 +1046,27 @@ require('lazy').setup({
   },
 })
 
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
+vim.diagnostic.disable()
+
+-- The line beneath this is called `modeline`. See `
+vim.keymap.set('n', '<leader>ld', vim.diagnostic.enable, { desc = '[L]inting: [D]iagnostics enable' })
+vim.keymap.set('n', '<leader>lD', vim.diagnostic.disable, { desc = '[L]inting: [D]iagnostics disable' })
+vim.keymap.set('n', '<leader>ls', '<cmd>Telescope lsp_document_symbols<cr>')
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'r',
+  callback = function()
+    vim.bo.indentexpr = ''
+  end,
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'json',
+  callback = function()
+    vim.schedule(function()
+      vim.opt_local.shiftwidth = 2
+      vim.opt_local.tabstop = 2
+      vim.opt_local.expandtab = true
+    end)
+  end,
+})
